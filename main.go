@@ -2,55 +2,92 @@
  * @Author: gitsrc
  * @Date: 2021-03-08 13:09:44
  * @LastEditors: gitsrc
- * @LastEditTime: 2021-08-17 15:43:06
+ * @LastEditTime: 2021-08-20 10:50:01
  * @FilePath: /IceFireDB/main.go
  */
 
 package main
 
 import (
+	"fmt"
 	"io"
-	"os"
+	"net/http"
+	_ "net/http/pprof"
 	"path/filepath"
+	"sync/atomic"
 
-	"github.com/gitsrc/rafthub"
+	"github.com/dgraph-io/badger/v3"
+	_ "github.com/gitsrc/IceFireDB/driver/badger"
+	"github.com/gitsrc/IceFireDB/hybriddb"
+
+	"github.com/gitsrc/IceFireDB/utils"
 	lediscfg "github.com/ledisdb/ledisdb/config"
 	"github.com/ledisdb/ledisdb/ledis"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tidwall/sds"
+	rafthub "github.com/tidwall/uhaha"
+)
+
+var (
+	// storageBackend select storage Engine
+	storageBackend string
+	// pprof listen
+	pprofAddr string
+	// debug
+	debug bool
 )
 
 func main() {
 	conf.Name = "IceFireDB"
 	conf.Version = "1.0.0"
 	conf.GitSHA = BuildVersion
+	conf.Flag.Custom = true
+	confInit(&conf)
 	conf.DataDirReady = func(dir string) {
-		os.RemoveAll(filepath.Join(dir, "main.db"))
+		//os.RemoveAll(filepath.Join(dir, "main.db"))
 
-		//配置ledis相关路径
-		cfg := lediscfg.NewConfigDefault()
-		cfg.DataDir = filepath.Join(dir, "main.db")
+		ldsCfg = lediscfg.NewConfigDefault()
+		ldsCfg.DataDir = filepath.Join(dir, "main.db")
+		ldsCfg.Databases = 1
+		ldsCfg.DBName = storageBackend
 
 		var err error
-		le, err = ledis.Open(cfg)
-
+		le, err = ledis.Open(ldsCfg)
 		if err != nil {
 			panic(err)
 		}
 
 		ldb, err = le.Select(0)
-
 		if err != nil {
 			panic(err)
 		}
 
-		//Obtain the leveldb object and handle it carefully
+		// Obtain the leveldb object and handle it carefully
 		driver := ldb.GetSDB().GetDriver().GetStorageEngine()
-		db = driver.(*leveldb.DB)
+		switch v := driver.(type) {
+		case *leveldb.DB:
+			db = v
+		case *badger.DB:
+		default:
+			panic(fmt.Errorf("unsupported storage is caused: %T", v))
+		}
+		if storageBackend == hybriddb.StorageName {
+			serverInfo.RegisterExtInfo(ldb.GetSDB().GetDriver().(*hybriddb.DB).Metrics)
+		}
 	}
-
+	if debug {
+		// pprof for profiling
+		go func() {
+			http.ListenAndServe(pprofAddr, nil)
+		}()
+	}
 	conf.Snapshot = snapshot
 	conf.Restore = restore
+	conf.ConnOpened = connOpened
+	conf.ConnClosed = connClosed
+	conf.CmdRewriteFunc = utils.RedisCmdRewrite
+
+	fmt.Printf("start with Storage Engine: %s\n", storageBackend)
 	rafthub.Main(conf)
 }
 
@@ -112,4 +149,14 @@ func restore(rd io.Reader) (interface{}, error) {
 		return nil, err
 	}
 	return nil, nil
+}
+
+func connOpened(addr string) (context interface{}, accept bool) {
+	atomic.AddInt64(&respClientNum, 1)
+	return nil, true
+}
+
+func connClosed(context interface{}, addr string) {
+	atomic.AddInt64(&respClientNum, -1)
+	return
 }

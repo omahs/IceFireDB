@@ -2,7 +2,7 @@
  * @Author: gitsrc
  * @Date: 2020-12-23 13:30:07
  * @LastEditors: gitsrc
- * @LastEditTime: 2021-12-10 14:33:37
+ * @LastEditTime: 2021-12-10 14:35:43
  * @FilePath: /IceFireDB/README.md
 -->
 
@@ -12,13 +12,13 @@
     width="201" height="300" border="0" alt="IceFireDB">
 </p>
 
-# IceFireDB - [ WEB2 + WEB3 ] 
+# IceFireDB  - [ WEB2 + WEB3  ]
 ![test](https://github.com/IceFireDB/IceFireDB/actions/workflows/test.yml/badge.svg)
 ![build](https://github.com/IceFireDB/IceFireDB/actions/workflows/build.yml/badge.svg)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FIceFireDB%2FIceFireDB.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FIceFireDB%2FIceFireDB?ref=badge_shield)
 
 
-Decentralized distributed nosql database, Web3 world system access point, supports RESP, RAFT and blockchain protocols.
+Decentralized distributed nosql database, Web3 world access point, supports RESP, RAFT and blockchain protocols.
 
 1. High performance
 2. Distributed consistency
@@ -26,6 +26,14 @@ Decentralized distributed nosql database, Web3 world system access point, suppor
 4. Cold and hot mixed data storage structure
 5. Based on IPFS decentralized storage, build a persistent data distributed storage layer.（Upgrading soon）
 6. More advanced cache implementation, faster LSM persistent storage
+# Imagine Architecture
+
+<p align="center">
+<img 
+    src="IceFireDB_Architecture.png" 
+     alt="IceFireDB_Architecture">
+</p>
+
 # Imagine Architecture
 
 <p align="center">
@@ -172,4 +180,3 @@ GET: 2130875.50 requests per second
 
 # Disclaimers
 When you use this software, you have agreed and stated that the author, maintainer and contributor of this software are not responsible for any risks, costs or problems you encounter. If you find a software defect or BUG, ​​please submit a patch to help improve it!
-

@@ -2,7 +2,7 @@
  * @Author: gitsrc
  * @Date: 2021-03-10 11:17:13
  * @LastEditors: gitsrc
- * @LastEditTime: 2021-08-19 22:51:21
+ * @LastEditTime: 2021-08-20 10:47:35
  * @FilePath: /IceFireDB/global.go
  */
 
@@ -11,23 +11,30 @@ package main
 import (
 	"fmt"
 
-	"github.com/gitsrc/rafthub"
+	lediscfg "github.com/ledisdb/ledisdb/config"
+
 	"github.com/ledisdb/ledisdb/ledis"
 	"github.com/syndtr/goleveldb/leveldb"
+	rafthub "github.com/tidwall/uhaha"
 )
 
-//BuildDate: Binary file compilation time
-//BuildVersion: Binary compiled GIT version
+// BuildDate: Binary file compilation time
+// BuildVersion: Binary compiled GIT version
 var (
 	BuildDate    string
 	BuildVersion string
 )
 
-var db *leveldb.DB
-var le *ledis.Ledis
-var ldb *ledis.DB
+var (
+	db            *leveldb.DB
+	le            *ledis.Ledis
+	ldb           *ledis.DB
+	ldsCfg        *lediscfg.Config
+	serverInfo    *info
+	respClientNum int64
+)
 
-var conf rafthub.Config //raft config
+var conf rafthub.Config // raft config
 
 var banner string
 

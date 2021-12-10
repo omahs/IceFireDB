@@ -1,8 +1,8 @@
 /*
  * @Author: gitsrc
- * @Date: 2021-03-08 17:57:04
+ * @Date: 2021-03-08 18:20:04
  * @LastEditors: gitsrc
- * @LastEditTime: 2021-08-17 10:39:41
+ * @LastEditTime: 2021-09-24 13:40:56
  * @FilePath: /IceFireDB/strings.go
  */
 
@@ -12,8 +12,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gitsrc/rafthub"
 	"github.com/ledisdb/ledisdb/ledis"
+	"github.com/tidwall/uhaha"
+	rafthub "github.com/tidwall/uhaha"
 
 	"github.com/tidwall/redcon"
 )
@@ -38,17 +39,18 @@ func init() {
 	conf.AddWriteCommand("MSET", cmdMSET)
 	conf.AddWriteCommand("SET", cmdSET)
 	conf.AddWriteCommand("SETNX", cmdSETNX)
-	//conf.AddWriteCommand("SETEX", cmdSETEX) // SETEX => SETEXAT
+	//SETEX => SETEXAT : When the raft node is down and the log is played back, the setex command is still played back, so it needs to be intercepted at the network layer to modify the command
+	conf.AddWriteCommand("SETEX", cmdSETEX)
 	conf.AddWriteCommand("SETEXAT", cmdSETEXAT)
 	conf.AddWriteCommand("SETRANGE", cmdSETRANGE)
 	conf.AddReadCommand("STRLEN", cmdSTRLEN)
-	//conf.AddWriteCommand("EXPIRE", cmdEXPIRE)     //EXPIRE => EXPIREAT
-	conf.AddWriteCommand("EXPIREAT", cmdEXPIREAT) //Timeout command
+	conf.AddWriteCommand("EXPIRE", cmdEXPIRE)     //EXPIRE => EXPIREAT
+	conf.AddWriteCommand("EXPIREAT", cmdEXPIREAT) // Timeout command
 	conf.AddReadCommand("TTL", cmdTTL)
-	//conf.AddWriteCommand("PERSIST", cmdPERSIST) //Prohibition: time persistence
+	// conf.AddWriteCommand("PERSIST", cmdPERSIST) //Prohibition: time persistence
 }
 
-// func cmdPERSIST(m rafthub.Machine, args []string) (interface{}, error) {
+// func cmdPERSIST(m uhaha.Machine, args []string) (interface{}, error) {
 // 	if len(args) != 2 {
 // 		return nil, rafthub.ErrWrongNumArgs
 // 	}
@@ -60,18 +62,18 @@ func init() {
 // 	return redcon.SimpleInt(n), nil
 // }
 
-func cmdEXPIREAT(m rafthub.Machine, args []string) (interface{}, error) {
+func cmdEXPIREAT(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 3 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
 
-	when, err := ledis.StrInt64([]byte(args[2]), nil)
+	timestamp, err := ledis.StrInt64([]byte(args[2]), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	//如果时间戳小于当前时间，则进行删除操作
-	if when < time.Now().Unix() {
+	// 如果时间戳小于当前时间，则进行删除操作
+	if timestamp < time.Now().Unix() {
 		keys := make([][]byte, 1)
 		keys[0] = []byte(args[1])
 		_, err := ldb.Del(keys...)
@@ -81,7 +83,7 @@ func cmdEXPIREAT(m rafthub.Machine, args []string) (interface{}, error) {
 		return redcon.SimpleInt(1), nil
 	}
 
-	v, err := ldb.ExpireAt([]byte(args[1]), when)
+	v, err := ldb.ExpireAt([]byte(args[1]), timestamp)
 	if err != nil {
 		return nil, err
 	}
@@ -89,24 +91,33 @@ func cmdEXPIREAT(m rafthub.Machine, args []string) (interface{}, error) {
 	return redcon.SimpleInt(v), nil
 }
 
-// func cmdEXPIRE(m rafthub.Machine, args []string) (interface{}, error) {
-// 	if len(args) != 3 {
-// 		return nil, rafthub.ErrWrongNumArgs
-// 	}
+func cmdEXPIRE(m uhaha.Machine, args []string) (interface{}, error) {
+	if len(args) != 3 {
+		return nil, rafthub.ErrWrongNumArgs
+	}
 
-// 	duration, err := ledis.StrInt64([]byte(args[2]), nil)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	duration, err := ledis.StrInt64([]byte(args[2]), nil)
+	if err != nil {
+		return nil, err
+	}
+	timestamp := m.Now().Unix() + duration
+	if timestamp < time.Now().Unix() {
+		keys := make([][]byte, 1)
+		keys[0] = []byte(args[1])
+		_, err := ldb.Del(keys...)
+		if err != nil {
+			return nil, err
+		}
+		return redcon.SimpleInt(1), nil
+	}
+	v, err := ldb.ExpireAt([]byte(args[1]), timestamp)
+	if err != nil {
+		return nil, err
+	}
+	return redcon.SimpleInt(v), nil
+}
 
-// 	v, err := ldb.Expire([]byte(args[1]), duration)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return redcon.SimpleInt(v), nil
-// }
-
-func cmdSTRLEN(m rafthub.Machine, args []string) (interface{}, error) {
+func cmdSTRLEN(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 2 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
@@ -118,7 +129,7 @@ func cmdSTRLEN(m rafthub.Machine, args []string) (interface{}, error) {
 	return redcon.SimpleInt(n), nil
 }
 
-func cmdSETRANGE(m rafthub.Machine, args []string) (interface{}, error) {
+func cmdSETRANGE(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 4 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
@@ -138,7 +149,7 @@ func cmdSETRANGE(m rafthub.Machine, args []string) (interface{}, error) {
 	return redcon.SimpleInt(n), nil
 }
 
-func cmdINCRBY(m rafthub.Machine, args []string) (interface{}, error) {
+func cmdINCRBY(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 3 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
@@ -155,7 +166,7 @@ func cmdINCRBY(m rafthub.Machine, args []string) (interface{}, error) {
 	return redcon.SimpleInt(n), nil
 }
 
-func cmdINCR(m rafthub.Machine, args []string) (interface{}, error) {
+func cmdINCR(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 2 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
@@ -167,7 +178,7 @@ func cmdINCR(m rafthub.Machine, args []string) (interface{}, error) {
 	return redcon.SimpleInt(n), nil
 }
 
-func cmdGETSET(m rafthub.Machine, args []string) (interface{}, error) {
+func cmdGETSET(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 3 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
@@ -179,7 +190,7 @@ func cmdGETSET(m rafthub.Machine, args []string) (interface{}, error) {
 	return v, nil
 }
 
-func cmdGETRANGE(m rafthub.Machine, args []string) (interface{}, error) {
+func cmdGETRANGE(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 4 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
@@ -202,7 +213,7 @@ func cmdGETRANGE(m rafthub.Machine, args []string) (interface{}, error) {
 	return v, nil
 }
 
-func cmdSETBIT(m rafthub.Machine, args []string) (interface{}, error) {
+func cmdSETBIT(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 4 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
@@ -225,7 +236,7 @@ func cmdSETBIT(m rafthub.Machine, args []string) (interface{}, error) {
 	return redcon.SimpleInt(n), nil
 }
 
-func cmdGETBIT(m rafthub.Machine, args []string) (interface{}, error) {
+func cmdGETBIT(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 3 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
@@ -243,8 +254,8 @@ func cmdGETBIT(m rafthub.Machine, args []string) (interface{}, error) {
 	return redcon.SimpleInt(n), nil
 }
 
-//此处和redis标准有区别，当前只支持一个key的判断过程
-func cmdEXISTS(m rafthub.Machine, args []string) (interface{}, error) {
+// 此处和redis标准有区别，当前只支持一个key的判断过程
+func cmdEXISTS(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 2 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
@@ -256,7 +267,7 @@ func cmdEXISTS(m rafthub.Machine, args []string) (interface{}, error) {
 	return redcon.SimpleInt(n), nil
 }
 
-func cmdDECRBY(m rafthub.Machine, args []string) (interface{}, error) {
+func cmdDECRBY(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 3 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
@@ -273,7 +284,7 @@ func cmdDECRBY(m rafthub.Machine, args []string) (interface{}, error) {
 	return redcon.SimpleInt(n), nil
 }
 
-func cmdDECR(m rafthub.Machine, args []string) (interface{}, error) {
+func cmdDECR(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 2 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
@@ -285,7 +296,7 @@ func cmdDECR(m rafthub.Machine, args []string) (interface{}, error) {
 	return redcon.SimpleInt(n), nil
 }
 
-func cmdBITPOS(m rafthub.Machine, args []string) (interface{}, error) {
+func cmdBITPOS(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) < 3 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
@@ -308,14 +319,14 @@ func cmdBITPOS(m rafthub.Machine, args []string) (interface{}, error) {
 	return redcon.SimpleInt(n), nil
 }
 
-func cmdBITOP(m rafthub.Machine, args []string) (interface{}, error) {
+func cmdBITOP(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) < 4 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
 
 	op := args[1]
 	destKey := args[2]
-	//srcKeys := args[3:]
+	// srcKeys := args[3:]
 
 	srcKeys := make([][]byte, len(args)-3)
 	for i := 3; i < len(args); i++ {
@@ -329,7 +340,7 @@ func cmdBITOP(m rafthub.Machine, args []string) (interface{}, error) {
 	return redcon.SimpleInt(n), nil
 }
 
-func cmdAPPEND(m rafthub.Machine, args []string) (interface{}, error) {
+func cmdAPPEND(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 3 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
@@ -341,7 +352,7 @@ func cmdAPPEND(m rafthub.Machine, args []string) (interface{}, error) {
 	return redcon.SimpleInt(n), nil
 }
 
-func cmdBITCOUNT(m rafthub.Machine, args []string) (interface{}, error) {
+func cmdBITCOUNT(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) < 2 || len(args) > 4 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
@@ -359,9 +370,9 @@ func cmdBITCOUNT(m rafthub.Machine, args []string) (interface{}, error) {
 	return redcon.SimpleInt(n), nil
 }
 
-//此处和redis标准有区别,需要丰富算法，支撑更多原子指令
-func cmdSET(m rafthub.Machine, args []string) (interface{}, error) {
-	if len(args) < 3 {
+// 此处和redis标准有区别,需要丰富算法，支撑更多原子指令
+func cmdSET(m uhaha.Machine, args []string) (interface{}, error) {
+	if len(args) != 3 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
 
@@ -372,32 +383,19 @@ func cmdSET(m rafthub.Machine, args []string) (interface{}, error) {
 	return redcon.SimpleString("OK"), nil
 }
 
-// func cmdSETEX(m rafthub.Machine, args []string) (interface{}, error) {
-// 	if len(args) < 4 {
-// 		return nil, rafthub.ErrWrongNumArgs
-// 	}
-// 	sec, err := ledis.StrInt64([]byte(args[2]), nil)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	if err := ldb.SetEX([]byte(args[1]), sec, []byte(args[3])); err != nil {
-// 		return nil, err
-// 	}
-
-// 	return redcon.SimpleString("OK"), nil
-// }
-
-func cmdSETEXAT(m rafthub.Machine, args []string) (interface{}, error) {
-	if len(args) < 4 {
+// Setex is rewritten as setexat to avoid the exception of raft log playback
+func cmdSETEX(m uhaha.Machine, args []string) (interface{}, error) {
+	if len(args) != 4 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
-	timestamp, err := ledis.StrInt64([]byte(args[2]), nil)
+
+	duration, err := ledis.StrInt64([]byte(args[2]), nil)
 	if err != nil {
 		return nil, err
 	}
+	timestamp := m.Now().Unix() + duration
 
-	//如果时间戳小于当前时间，则进行删除操作
+	//If the timestamp is less than the current time, delete operation
 	if timestamp < time.Now().Unix() {
 		keys := make([][]byte, 1)
 		keys[0] = []byte(args[1])
@@ -415,13 +413,39 @@ func cmdSETEXAT(m rafthub.Machine, args []string) (interface{}, error) {
 	return redcon.SimpleString("OK"), nil
 }
 
-func cmdSETNX(m rafthub.Machine, args []string) (interface{}, error) {
-	if len(args) < 3 {
+func cmdSETEXAT(m uhaha.Machine, args []string) (interface{}, error) {
+	if len(args) < 4 {
+		return nil, rafthub.ErrWrongNumArgs
+	}
+	timestamp, err := ledis.StrInt64([]byte(args[2]), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	//If the timestamp is less than the current time, delete operation
+	if timestamp < time.Now().Unix() {
+		keys := make([][]byte, 1)
+		keys[0] = []byte(args[1])
+		_, err := ldb.Del(keys...)
+		if err != nil {
+			return nil, err
+		}
+		return redcon.SimpleString("OK"), nil
+	}
+
+	if err := ldb.SetEXAT([]byte(args[1]), timestamp, []byte(args[3])); err != nil {
+		return nil, err
+	}
+
+	return redcon.SimpleString("OK"), nil
+}
+
+func cmdSETNX(m uhaha.Machine, args []string) (interface{}, error) {
+	if len(args) != 3 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
 
 	n, err := ldb.SetNX([]byte(args[1]), []byte(args[2]))
-
 	if err != nil {
 		return nil, err
 	}
@@ -429,16 +453,15 @@ func cmdSETNX(m rafthub.Machine, args []string) (interface{}, error) {
 	return redcon.SimpleInt(n), nil
 }
 
-func cmdGET(m rafthub.Machine, args []string) (interface{}, error) {
+func cmdGET(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 2 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
-	count, err := ldb.Exists([]byte(args[1]))
+	/*count, err := ldb.Exists([]byte(args[1]))
 	if err != nil || count == 0 {
 		return nil, nil
-	}
+	}*/
 	val, err := ldb.Get([]byte(args[1]))
-
 	if err != nil {
 		return nil, err
 	}
@@ -446,8 +469,8 @@ func cmdGET(m rafthub.Machine, args []string) (interface{}, error) {
 	return val, nil
 }
 
-//此处和redis标准有区别，为了事务一致性考虑，没有进行key存在判断
-func cmdDEL(m rafthub.Machine, args []string) (interface{}, error) {
+// 此处和redis标准有区别，为了事务一致性考虑，没有进行key存在判断
+func cmdDEL(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) < 2 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
@@ -465,7 +488,7 @@ func cmdDEL(m rafthub.Machine, args []string) (interface{}, error) {
 	return redcon.SimpleInt(n), nil
 }
 
-func cmdMSET(m rafthub.Machine, args []string) (interface{}, error) {
+func cmdMSET(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) < 3 || (len(args)-1)%2 != 0 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
@@ -486,7 +509,7 @@ func cmdMSET(m rafthub.Machine, args []string) (interface{}, error) {
 	return redcon.SimpleString("OK"), nil
 }
 
-func cmdMGET(m rafthub.Machine, args []string) (interface{}, error) {
+func cmdMGET(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) < 2 {
 		return nil, rafthub.ErrWrongNumArgs
 	}
@@ -505,7 +528,7 @@ func cmdMGET(m rafthub.Machine, args []string) (interface{}, error) {
 	return v, nil
 }
 
-func cmdTTL(m rafthub.Machine, args []string) (interface{}, error) {
+func cmdTTL(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) < 2 {
 		return nil, rafthub.ErrWrongNumArgs
 	}

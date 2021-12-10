@@ -1,5 +1,6 @@
 PROG=bin/IceFireDB
 
+DRIVER?=badger
 
 SRCS=.
 
@@ -59,7 +60,14 @@ clean:
 	rm -rf $(CONF_INSTALL_PREFIX)
 
 run:
-	go run ./main.go 
+	go run .
 
 run_dev:
-	go run ./main.go
+	go run .
+
+test:
+	DRIVER=$(DRIVER) go test -v --v ./...
+
+bench-run:
+	rm -rf ./data
+	./bin/IceFireDB --nosync
