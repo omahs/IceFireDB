@@ -4,13 +4,13 @@
 ![build](https://github.com/IceFireDB/IceFireDB/actions/workflows/build.yml/badge.svg)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FIceFireDB%2FIceFireDB.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FIceFireDB%2FIceFireDB?ref=badge_shield)
 
-Distributed disk storage system based on Raft and RESP protocol.
+Decentralized distributed nosql database, Web3 world system access point, supports RESP, RAFT and blockchain protocols.
 
 1. High performance
 2. Distributed consistency
 3. Reliable LSM disk storage
 4. Cold and hot mixed data storage structure
-5. Multiple groups of raft clusters, horizontal expansion and contraction of data groups（Upgrading soon）
+5. Based on IPFS decentralized storage, build a persistent data distributed storage layer.（Upgrading soon）
 6. More advanced cache implementation, faster LSM persistent storage
 
 # Imagine Architecture
