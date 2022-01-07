@@ -22,7 +22,7 @@ Decentralized distributed nosql database, Web3 world access point, supports RESP
 </p>
 
 # Command support
-## 1. String operating
+## 1. Strings
 * APPEND
 * BITCOUNT
 * BITOP
@@ -47,7 +47,7 @@ Decentralized distributed nosql database, Web3 world access point, supports RESP
 * EXPIRE
 * EXPIREAT
 * TTL
-## 2. Hash operating
+## 2. Hashes
 * HSET
 * HGET
 * HDEL
@@ -68,7 +68,7 @@ Decentralized distributed nosql database, Web3 world access point, supports RESP
 * HKEYEXIST
 * HTTL
 
-## 3. List operating
+## 3. Lists
 * RPUSH
 * LPOP
 * LINDEX
