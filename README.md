@@ -2,7 +2,7 @@
  * @Author: gitsrc
  * @Date: 2020-12-23 13:30:07
  * @LastEditors: gitsrc
- * @LastEditTime: 2021-12-13 14:11:35
+ * @LastEditTime: 2022-02-11 10:07:48
  * @FilePath: /IceFireDB/README.md
 -->
 
@@ -24,7 +24,7 @@ Decentralized distributed nosql database, Web3 world access point, supports RESP
 2. Distributed consistency
 3. Reliable LSM disk storage
 4. Cold and hot mixed data storage structure
-5. Based on IPFS decentralized storage, build a persistent data distributed storage layer.（Upgrading soon）
+5. Based on IPFS decentralized storage, build a persistent data distributed storage layer.（beta version）
 6. More advanced cache implementation, faster LSM persistent storage
 # Imagine Architecture
 
