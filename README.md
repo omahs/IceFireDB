@@ -2,7 +2,7 @@
  * @Author: gitsrc
  * @Date: 2020-12-23 13:30:07
  * @LastEditors: gitsrc
- * @LastEditTime: 2022-04-08 14:08:00
+ * @LastEditTime: 2022-04-09 12:06:41
  * @FilePath: /IceFireDB/README.md
 -->
 
@@ -18,7 +18,13 @@
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FIceFireDB%2FIceFireDB.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FIceFireDB%2FIceFireDB?ref=badge_shield)
 
 
-Decentralized distributed nosql database, Web3 world access point, supports RESP, RAFT, IPFS and blockchain protocols.
+IceFireDB is a database built for web3 and web2. The storage layer supports disk,OSS,IPFS and other storage methods, the protocol layer currently supports RESP, and will support SQL and GraphQL in the future. A blockchain fusion layer based on Ethereum and EOS is being built, which can be used in fusion with higher-level decentralized computing platforms and applications as well as identity, financial assets, intellectual property, and sidechain protocols. IceFireDB strives to fill the gap of the decentralized stack, making web3 application data storage more convenient, and making web2 application easier to connect to the blockchain.
+
+<p align="center">
+<img 
+    src="./imgs/project_purpose.png" 
+     alt="project_purpose">
+</p>
 
 1. High performance
 2. Distributed consistency
@@ -29,15 +35,7 @@ Decentralized distributed nosql database, Web3 world access point, supports RESP
 7. Support kv metadata layer and mixed storage structure of hot and cold.
 8. More advanced cache implementation, faster LSM persistent storage（Source of ideas: https://dl.acm.org/doi/10.1145/3448016.3452819 ）
 
-# Imagine Architecture
-
-<p align="center">
-<img 
-    src="IceFireDB_Architecture.png" 
-     alt="IceFireDB_Architecture">
-</p>
-
-# Imagine Architecture
+# Architecture
 
 <p align="center">
 <img 
@@ -46,7 +44,7 @@ Decentralized distributed nosql database, Web3 world access point, supports RESP
 </p>
 
 # Command support
-## 1. String operating
+## 1. Strings
 * APPEND
 * BITCOUNT
 * BITOP
@@ -71,7 +69,7 @@ Decentralized distributed nosql database, Web3 world access point, supports RESP
 * EXPIRE
 * EXPIREAT
 * TTL
-## 2. Hash operating
+## 2. Hashes
 * HSET
 * HGET
 * HDEL
@@ -92,7 +90,7 @@ Decentralized distributed nosql database, Web3 world access point, supports RESP
 * HKEYEXIST
 * HTTL
 
-## 3. List operating
+## 3. Lists
 * RPUSH
 * LPOP
 * LINDEX
@@ -180,6 +178,7 @@ GET: 2130875.50 requests per second
 * https://github.com/dgraph-io/ristretto
 * https://github.com/ledisdb/ledisdb
 * https://github.com/dgraph-io/badger
+* https://github.com/ipfs/ipfs
 
 # Disclaimers
 When you use this software, you have agreed and stated that the author, maintainer and contributor of this software are not responsible for any risks, costs or problems you encounter. If you find a software defect or BUG, ​​please submit a patch to help improve it!
