@@ -9,7 +9,7 @@ IceFireDB is a database built for web3 and web2. The storage layer supports disk
 
 <p align="center">
 <img 
-    src="../imgs/project_purpose.png" 
+    src="https://raw.githubusercontent.com/IceFireDB/IceFireDB/main/imgs/project_purpose.png" 
      alt="project_purpose">
 </p>
 
@@ -26,7 +26,7 @@ IceFireDB is a database built for web3 and web2. The storage layer supports disk
 
 <p align="center">
 <img 
-    src="../IceFireDB_Architecture.png" 
+    src="https://raw.githubusercontent.com/IceFireDB/IceFireDB/main/IceFireDB_Architecture.png" 
      alt="IceFireDB_Architecture">
 </p>
 
